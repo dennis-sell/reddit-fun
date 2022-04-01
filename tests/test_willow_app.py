@@ -1,4 +1,4 @@
-from willow_app import __version__
+from willow import __version__
 
 
 def test_version():
