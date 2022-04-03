@@ -47,35 +47,31 @@ class RedditAPI:
 
 
     def fetch_posts(self, url_subdomain_path: str, num_posts: int) -> pd.DataFrame:
-        data = pd.DataFrame()
+        data = []
         num_posts_left = num_posts
         params = {}
         params['limit'] = min(RedditAPI.NUM_POSTS_PER_GET, num_posts_left)
-
 
         while num_posts_left > 0:
             res = self.fetch_from_url(url_subdomain_path, params=params)
 
             new_df = df_from_response(res.json())
+            data.append(new_df)
+
             row = new_df.iloc[len(new_df)-1]
             fullname = row['kind'] + '_' + row['id']
             # In the reddit API "after" means earlier posts
             params['after'] = fullname
             params['limit'] = min(RedditAPI.NUM_POSTS_PER_GET, num_posts_left)
 
-            data = data.append(new_df, ignore_index=True)
-
             num_posts_left -= RedditAPI.NUM_POSTS_PER_GET
 
-        return data
+        return pd.concat(data)
 
 
 def df_from_response(reddit_response_json: Dict) -> pd.DataFrame:
-    df = pd.DataFrame()
-
-    # loop through each post pulled from res and append to df
-    for post in reddit_response_json['data']['children']:
-        df = df.append({
+    post_data = [
+        {
             'subreddit': post['data']['subreddit'],
             'title': post['data']['title'],
             'selftext': post['data']['selftext'],
@@ -87,6 +83,7 @@ def df_from_response(reddit_response_json: Dict) -> pd.DataFrame:
             'created_utc': datetime.fromtimestamp(post['data']['created_utc']).strftime('%Y-%m-%dT%H:%M:%SZ'),
             'id': post['data']['id'],
             'kind': post['kind']
-        }, ignore_index=True)
-
-    return df
+        }
+        for post in reddit_response_json['data']['children']
+    ]
+    return pd.DataFrame(post_data)
