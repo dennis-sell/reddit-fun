@@ -8,6 +8,7 @@ authors = ["Dennis Sell <sell.dennis@gmail.com>"]
 python = "^3.9"
 Django = "^4.0.3"
 requests = "^2.27.1"
+pandas = "^1.4.2"
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.2"
