@@ -47,6 +47,8 @@ class RedditAPI:
 
 
     def fetch_posts(self, url_subdomain_path: str, num_posts: int) -> pd.DataFrame:
+        if url_subdomain_path[0] == "/":
+            url_subdomain_path = url_subdomain_path[1:]
         data = []
         num_posts_left = num_posts
         params = {}
