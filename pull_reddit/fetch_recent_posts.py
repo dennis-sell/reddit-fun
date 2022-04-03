@@ -59,7 +59,7 @@ class RedditAPI:
             data.append(new_df)
 
             row = new_df.iloc[len(new_df)-1]
-            fullname = row['kind'] + '_' + row['id']
+            fullname = row['kind'] + '_' + row['post_id']
             # In the reddit API "after" means earlier posts
             params['after'] = fullname
             params['limit'] = min(RedditAPI.NUM_POSTS_PER_GET, num_posts_left)
@@ -72,16 +72,18 @@ class RedditAPI:
 def df_from_response(reddit_response_json: Dict) -> pd.DataFrame:
     post_data = [
         {
+            'post_id': post['data']['id'],
             'subreddit': post['data']['subreddit'],
             'title': post['data']['title'],
             'selftext': post['data']['selftext'],
-            'upvote_ratio': post['data']['upvote_ratio'],
-            'ups': post['data']['ups'],
-            'downs': post['data']['downs'],
+            'post_permalink': post['data']['permalink'],
+            'up_votes': post['data']['ups'],
+            'down_votes': post['data']['downs'],
             'score': post['data']['score'],
             'link_flair_css_class': post['data']['link_flair_css_class'],
             'created_utc': datetime.fromtimestamp(post['data']['created_utc']).strftime('%Y-%m-%dT%H:%M:%SZ'),
-            'id': post['data']['id'],
+            'author': post['data']['author'],
+            'author_fullname': post['data']['author_fullname'],
             'kind': post['kind']
         }
         for post in reddit_response_json['data']['children']
