@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "willow-app"
+name = "reddit_analysis_app"
 version = "0.1.0"
 description = ""
 authors = ["Dennis Sell <sell.dennis@gmail.com>"]
