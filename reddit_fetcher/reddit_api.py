@@ -1,6 +1,6 @@
 from datetime import datetime
 import os
-from typing import Dict
+from typing import Dict, Iterable
 
 import pandas as pd
 import requests
@@ -70,6 +70,12 @@ class RedditAPI:
 
         return pd.concat(data)
 
+    def fetch_posts_from_subreddits(self, *, subreddits: Iterable[str], url_path: str, num_posts_per_sub: int) -> pd.DataFrame:
+        posts = []
+        for subreddit_name in subreddits:
+            posts.append(self.fetch_posts(f"{subreddit_name}/{url_path}", num_posts_per_sub))
+        posts = pd.concat(posts)
+        return posts
 
 def df_from_response(reddit_response_json: Dict) -> pd.DataFrame:
     post_data = [
@@ -83,10 +89,11 @@ def df_from_response(reddit_response_json: Dict) -> pd.DataFrame:
             'down_votes': post['data']['downs'],
             'score': post['data']['score'],
             'link_flair_css_class': post['data']['link_flair_css_class'],
-            'created_utc': datetime.fromtimestamp(post['data']['created_utc']).strftime('%Y-%m-%dT%H:%M:%SZ'),
+            'created_time_utc': datetime.fromtimestamp(post['data']['created_utc']).strftime('%Y-%m-%dT%H:%M:%SZ'),
             'author': post['data']['author'],
             'author_fullname': post['data']['author_fullname'],
-            'kind': post['kind']
+            'kind': post['kind'],
+            'fetched_time_utc': datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ'),
         }
         for post in reddit_response_json['data']['children']
     ]

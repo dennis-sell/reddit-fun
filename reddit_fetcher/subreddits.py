@@ -1,7 +1,7 @@
 import pandas as pd
 
 
-DEFAULT_SUBREDDITS = [
+DEFAULT_SUBREDDITS = set([
     "/r/AskReddit",
     "/r/announcements",
     "/r/funny",
@@ -51,7 +51,7 @@ DEFAULT_SUBREDDITS = [
     "/r/UpliftingNews",
     "/r/WritingPrompts",
     "/r/TwoXChromosomes",
-]
+])
 
 def get_popular_subreddits() -> pd.DataFrame:
     # This was generated from https://frontpagemetrics.com/top-sfw-subreddits/offset/
