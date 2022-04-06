@@ -38,26 +38,29 @@ class RedditAPI:
         return {**headers, **{'Authorization': os.environ['REDDIT_ACCESS_TOKEN']}}
 
 
-    def fetch_from_url(self, url_subdomain_path: str, **kwargs) -> requests.Response:
+    def fetch_from_url(self, url_path_post_domain: str, **kwargs) -> requests.Response:
         return requests.get(
-                f"https://oauth.reddit.com/{url_subdomain_path}",
+                f"https://oauth.reddit.com/{url_path_post_domain}",
                 headers=self.request_headers,
                 **kwargs,
         )
 
 
-    def fetch_posts(self, url_subdomain_path: str, num_posts: int) -> pd.DataFrame:
-        if url_subdomain_path[0] == "/":
-            url_subdomain_path = url_subdomain_path[1:]
+    def fetch_posts(self, url_path_post_domain: str, num_posts: int) -> pd.DataFrame:
+        if url_path_post_domain[0] == "/":
+            url_path_post_domain = url_path_post_domain[1:]
         data = []
         num_posts_left = num_posts
         params = {}
         params['limit'] = min(RedditAPI.NUM_POSTS_PER_GET, num_posts_left)
 
         while num_posts_left > 0:
-            res = self.fetch_from_url(url_subdomain_path, params=params)
+            res = self.fetch_from_url(url_path_post_domain, params=params)
 
             new_df = df_from_response(res.json())
+            if new_df.empty:
+                print(f"Could not fetch data from {url_path_post_domain}")
+                break
             data.append(new_df)
 
             row = new_df.iloc[len(new_df)-1]
@@ -70,14 +73,22 @@ class RedditAPI:
 
         return pd.concat(data)
 
-    def fetch_posts_from_subreddits(self, *, subreddits: Iterable[str], url_path: str, num_posts_per_sub: int) -> pd.DataFrame:
+    def fetch_posts_from_subreddits(self, *, subreddits: Iterable[str], url_path_post_sub: str, num_posts_per_sub: int) -> pd.DataFrame:
         posts = []
         for subreddit_name in subreddits:
-            posts.append(self.fetch_posts(f"{subreddit_name}/{url_path}", num_posts_per_sub))
+            url_path = f"{subreddit_name}/{url_path_post_sub}"
+            try:
+                posts.append(self.fetch_posts(url_path, num_posts_per_sub))
+            except Exception as e:
+                print(f"exception {e} happened while fetching from url: {url_path}")
+                raise e
         posts = pd.concat(posts)
         return posts
 
 def df_from_response(reddit_response_json: Dict) -> pd.DataFrame:
+    response_posts = reddit_response_json.get('data', {}).get('children')
+    if response_posts is None:
+        return pd.DataFrame()
     post_data = [
         {
             'post_id': post['data']['id'],
@@ -91,10 +102,10 @@ def df_from_response(reddit_response_json: Dict) -> pd.DataFrame:
             'link_flair_css_class': post['data']['link_flair_css_class'],
             'created_time_utc': datetime.fromtimestamp(post['data']['created_utc']).strftime('%Y-%m-%dT%H:%M:%SZ'),
             'author': post['data']['author'],
-            'author_fullname': post['data']['author_fullname'],
+            'author_fullname': post['data'].get('author_fullname'),
             'kind': post['kind'],
             'fetched_time_utc': datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ'),
         }
-        for post in reddit_response_json['data']['children']
+        for post in response_posts
     ]
     return pd.DataFrame(post_data)

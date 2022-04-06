@@ -18,7 +18,7 @@ def fetch_and_save_posts():
     for table_name, config in CONFIG.items():
         posts = reddit.fetch_posts_from_subreddits(
             subreddits=config['subreddits'],
-            url_path=config['url_path'],
+            url_path_post_sub=config['url_path'],
             num_posts_per_sub=config['num_posts'],
         )
         posts.to_sql(table_name, db_engine, if_exists='append')

@@ -1,5 +1,9 @@
 import pandas as pd
 
+BLACKLISTED_SUBREDDITS = set([
+    '/r/ImGoingToHellForThis',
+    '/r/subredditoftheday',
+])
 
 DEFAULT_SUBREDDITS = set([
     "/r/AskReddit",
@@ -56,6 +60,7 @@ DEFAULT_SUBREDDITS = set([
 def get_popular_subreddits() -> pd.DataFrame:
     # This was generated from https://frontpagemetrics.com/top-sfw-subreddits/offset/
     # as of 2022-04-03
-    return pd.read_csv("popular_subreddits.csv", delimiter=r"\s+")
+    popular = pd.read_csv("popular_subreddits.csv", delimiter=r"\s+")
+    return popular[~popular.subreddit.isin(BLACKLISTED_SUBREDDITS)]
 
 
